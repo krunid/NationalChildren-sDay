@@ -1,0 +1,891 @@
+
+<html lang="th">
+<head>
+    <meta charset="UTF-8"></meta>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"></meta>
+    <title>แบบทดสอบวันเด็กแห่งชาติ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&amp;display=swap" rel="stylesheet"></link>
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .page {
+            display: none;
+        }
+
+        .active {
+            display: block;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2196F3;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        .question {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .option:hover {
+            background-color: #f5f5f5;
+        }
+
+        .selected {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .timer {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #FF5722;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .correct {
+            background-color: #dff0d8;
+        }
+
+        .incorrect {
+            background-color: #f2dede;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- หน้าลงทะเบียน -->
+        <div class="page active" id="registration">
+            <h1>แบบทดสอบวันเด็กแห่งชาติ</h1>
+            <div class="form-group">
+                <label for="studentName">ชื่อ-นามสกุล:</label>
+                <input id="studentName" required="" type="text" />
+            </div>
+            <div class="form-group">
+                <label for="studentClass">ชั้นเรียน:</label>
+                <input id="studentClass" required="" type="text" />
+            </div>
+            <button class="btn" onclick="startQuiz()">เริ่มทำแบบทดสอบ</button>
+        </div>
+
+        <!-- หน้าแบบทดสอบ -->
+        <div class="page" id="quiz">
+            <div class="timer">เวลา: <span id="time">05:00</span></div>
+            <div id="question"></div>
+            <div class="navigation">
+                <button class="btn" onclick="previousQuestion()">ย้อนกลับ</button>
+                <button class="btn" onclick="nextQuestion()">ถัดไป</button>
+            </div>
+        </div>
+
+        <!-- หน้าผลลัพธ์ -->
+        <div class="page" id="results">
+            <h1>ผลการทดสอบ</h1>
+            <div id="resultDetails"></div>
+            <button class="btn" onclick="restartQuiz()">ทำแบบทดสอบอีกครั้ง</button>
+        </div>
+    </div>
+
+    <script>
+        // คำถามและคำตอบ
+        const questions = [
+            {
+                question: "วันเด็กแห่งชาติตรงกับวันใด?",
+                options: [
+                    "วันเสาร์ที่สองของเดือนมกราคม",
+                    "วันอาทิตย์ที่สองของเดือนมกราคม",
+                    "วันเสาร์แรกของเดือนมกราคม",
+                    "วันอาทิตย์แรกของเดือนมกราคม"
+                ],
+                answer: 0,
+                explanation: "วันเด็กแห่งชาติตรงกับวันเสาร์ที่สองของเดือนมกราคม"
+            },
+            {
+                question: "วันเด็กแห่งชาติเริ่มจัดครั้งแรกในประเทศไทยเมื่อใด?",
+                options: [
+                    "พ.ศ. 2500",
+                    "พ.ศ. 2502",
+                    "พ.ศ. 2505",
+                    "พ.ศ. 2508"
+                ],
+                answer: 1,
+                explanation: "ประเทศไทยเริ่มจัดงานวันเด็กแห่งชาติครั้งแรกในปี พ.ศ. 2502"
+            },
+            {
+                question: "คำขวัญวันเด็กแห่งชาติถูกกำหนดโดยใคร?",
+                options: [
+                    "นายกรัฐมนตรี",
+                    "รัฐมนตรีว่าการกระทรวงศึกษาธิการ",
+                    "พระบาทสมเด็จพระเจ้าอยู่หัว",
+                    "คณะรัฐมนตรี"
+                ],
+                answer: 0,
+                explanation: "คำขวัญวันเด็กแห่งชาติจะถูกกำหนดโดยนายกรัฐมนตรีของแต่ละปี"
+            },
+            {
+                question: "หน่วยงานใดเป็นผู้รับผิดชอบหลักในการจัดงานวันเด็กแห่งชาติ?",
+                options: [
+                    "กระทรวงศึกษาธิการ",
+                    "กระทรวงการพัฒนาสังคมและความมั่นคงของมนุษย์",
+                    "กระทรวงวัฒนธรรม",
+                    "สำนักนายกรัฐมนตรี"
+                ],
+                answer: 1,
+                explanation: "กระทรวงการพัฒนาสังคมและความมั่นคงของมนุษย์เป็นหน่วยงานหลักในการจัดงานวันเด็กแห่งชาติ"
+            },
+            {
+                question: "สิทธิขั้นพื้นฐานของเด็กมีกี่ประการ?",
+                options: [
+                    "2 ประการ",
+                    "3 ประการ",
+                    "4 ประการ",
+                    "5 ประการ"
+                ],
+                answer: 2,
+                explanation: "สิทธิขั้นพื้นฐานของเด็กมี 4 ประการ ได้แก่ สิทธิที่จะมีชีวิตรอด สิทธิที่จะได้รับการปกป้อง สิทธิที่จะได้รับการพัฒนา และสิทธิที่จะมีส่วนร่วม"
+            },
+            {
+                question: "วันเด็กสากลตรงกับวันที่เท่าไร?",
+                options: [
+                    "1 มิถุนายน",
+                    "20 พฤศจิกายน",
+                    "5 ธันวาคม",
+                    "31 ธันวาคม"
+                ],
+                answer: 0,
+                explanation: "วันเด็กสากล (Universal Children's Day) ตรงกับวันที่ 1 มิถุนายนของทุกปี"
+            },
+            {
+                question: "อนุสัญญาว่าด้วยสิทธิเด็กกำหนดอายุเท่าไรถือว่าเป็น 'เด็ก'?",
+                options: [
+                    "ต่ำกว่า 15 ปี",
+                    "ต่ำกว่า 18 ปี",
+                    "ต่ำกว่า 20 ปี",
+                    "ต่ำกว่า 25 ปี"
+                ],
+                answer: 1,
+                explanation: "ตามอนุสัญญาว่าด้วยสิทธิเด็ก บุคคลที่มีอายุต่ำกว่า 18 ปีถือว่าเป็นเด็ก"
+            },
+            {
+                question: "กิจกรรมใดที่มักจัดเป็นประจำในวันเด็กแห่งชาติ?",
+                options: [
+                    "การแข่งขันกีฬา",
+                    "การเปิดให้เข้าชมทำเนียบรัฐบาล",
+                    "การประกวดร้องเพลง",
+                    "การแข่งขันตอบปัญหา"
+                ],
+                answer: 1,
+                explanation: "การเปิดทำเนียบรัฐบาลให้เด็กๆ เข้าชมเป็นกิจกรรมที่จัดเป็นประจำทุกปีในวันเด็กแห่งชาติ"
+            },
+            {
+                question: "สถานที่ใดที่นิยมจัดกิจกรรมวันเด็กแห่งชาติมากที่สุด?",
+                options: [
+                    "โรงเรียน",
+                    "สวนสาธารณะ",
+                    "ศูนย์การค้า",
+                    "หน่วยงานราชการ"
+                ],
+                answer: 0,
+                explanation: "โรงเรียนเป็นสถานที่หลักในการจัดกิจกรรมวันเด็กแห่งชาติ เพราะเป็นศูนย์รวมของเด็กและเยาวชน"
+            },
+            {
+                question: "ข้อใดเป็นวัตถุประสงค์หลักของการจัดงานวันเด็กแห่งชาติ?",
+                options: [
+                    "เพื่อให้ความบันเทิงแก่เด็ก",
+                    "เพื่อส่งเสริมความสำคัญของเด็กในสังคม",
+                    "เพื่อให้ผู้ปกครองพาเด็กไปเที่ยว",
+                    "เพื่อกระตุ้นเศรษฐกิจ"
+                ],
+                answer: 1,
+                explanation: "วัตถุประสงค์หลักของการจัดงานวันเด็กแห่งชาติคือการส่งเสริมให้ทุกคนเห็นความสำคัญของเด็กซึ่งจะเป็นกำลังสำคัญของชาติในอนาคต"
+            }
+            // เพิ่มคำถามที่เหลือตามที่เคยให้ไว้
+        ];
+
+        let currentQuestion = 0;
+        let answers = new Array(questions.length).fill(null);
+        let timer;
+        let timeLeft = 300; // 5 นาที
+
+        function startQuiz() {
+            const name = document.getElementById('studentName').value;
+            const className = document.getElementById('studentClass').value;
+
+            if (!name || !className) {
+                alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+                return;
+            }
+
+            showPage('quiz');
+            showQuestion();
+            startTimer();
+        }
+
+        function showQuestion() {
+            const question = questions[currentQuestion];
+            document.getElementById('question').innerHTML = `
+                <div class="question">
+                    <h3>ข้อที่ ${currentQuestion + 1}</h3>
+                    <p>${question.question}</p>
+                    <div class="options">
+                        ${question.options.map((option, index) => `
+                            <div class="option ${answers[currentQuestion] === index ? 'selected' : ''}"
+                                 onclick="selectOption(${index})">
+                                ${option}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectOption(index) {
+            answers[currentQuestion] = index;
+            document.querySelectorAll('.option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            document.querySelectorAll('.option')[index].classList.add('selected');
+        }
+
+        function previousQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                showQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                showQuestion();
+            } else {
+                finishQuiz();
+            }
+        }
+
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                document.getElementById('time').textContent = 
+                    `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    finishQuiz();
+                }
+            }, 1000);
+        }
+
+        function finishQuiz() {
+            clearInterval(timer);
+            showPage('results');
+            showResults();
+        }
+
+        function showResults() {
+            let resultsHtml = '';
+            let notAnswered = 0;
+            let correctAnswers = 0;
+            let incorrectAnswers = 0;
+            let score = 0;
+
+            questions.forEach((question, index) => {
+                if (answers[index] === null) {
+                    notAnswered++;
+                } else if (answers[index] === question.answer) {
+                    correctAnswers++;
+                    score++;
+                } else {
+                    incorrectAnswers++;
+                }
+                
+                const isCorrect = answers[index] === question.answer;
+
+                resultsHtml += `
+                    <div class="question ${isCorrect ? 'correct' : 'incorrect'}">
+                        <p>ข้อ ${index + 1}: ${question.question}</p>
+                        <p>คำตอบของคุณ: ${answers[index] !== null ? 
+                            question.options[answers[index]] : '<span style="color: red;">ไม่ได้ตอบ</span>'}</p>
+                        <p>คำตอบที่ถูกต้อง: ${question.options[question.answer]}</p>
+                        <p>คำอธิบาย: ${question.explanation}</p>
+                    </div>
+                `;
+            });
+
+            const percentage = (score / questions.length) * 100;
+            let gradeText = '';
+            let gradeColor = '';
+
+            if (percentage >= 80) {
+                gradeText = 'ดีมาก';
+                gradeColor = '#4CAF50';
+            } else if (percentage >= 70) {
+                gradeText = 'ดี';
+                gradeColor = '#2196F3';
+            } else if (percentage >= 60) {
+                gradeText = 'พอใช้';
+                gradeColor = '#FF9800';
+            } else {
+                gradeText = 'ควรปรับปรุง';
+                gradeColor = '#f44336';
+            }
+
+            const summaryHtml = `
+                <div class="summary" style="margin: 20px 0; padding: 20px; background-color: #f8f9fa; border-radius: 8px;">
+                    <h2 style="color: #2196F3; margin-bottom: 15px;">สรุปผลการทดสอบ</h2>
+                    <div class="summary-content" style="font-size: 16px; line-height: 1.6;">
+                        <p><strong>คะแนนรวม:</strong> ${score} คะแนน จาก ${questions.length} คะแนนเต็ม (${percentage.toFixed(2)}%)</p>
+                        <p><strong>ตอบถูก:</strong> ${correctAnswers} ข้อ</p>
+                        <p><strong>ตอบผิด:</strong> ${incorrectAnswers} ข้อ</p>
+                        <p><strong>ไม่ได้ตอบ:</strong> ${notAnswered} ข้อ</p>
+                        <p><strong>การประเมินผล:</strong> 
+                            <span style="color: ${gradeColor};">${gradeText}</span>
+                        </p>
+                        <p><strong>เวลาที่ใช้:</strong> ${Math.floor((300 - timeLeft) / 60)} นาที ${(300 - timeLeft) % 60} วินาที</p>
+                    </div>
+                </div>
+                <div class="recommendations" style="margin: 20px 0; padding: 20px; background-color: #e3f2fd; border-radius: 8px;">
+                    <h3 style="color: #1976D2; margin-bottom: 10px;">คำแนะนำ</h3>
+                    <ul style="list-style-type: none; padding-left: 0;">
+                        ${percentage < 60 ? '<li>⚠️ ควรทบทวนเนื้อหาเกี่ยวกับวันเด็กแห่งชาติเพิ่มเติม</li>' : ''}
+                        ${notAnswered > 0 ? '<li>⚠️ ควรพยายามตอบคำถามให้ครบทุกข้อ</li>' : ''}
+                        ${timeLeft === 0 ? '<li>⚠️ ควรฝึกการทำข้อสอบให้เร็วขึ้น</li>' : ''}
+                        ${percentage >= 80 ? '<li>🌟 ทำได้ดีมาก ควรรักษามาตรฐานนี้ไว้</li>' : ''}
+                    </ul>
+                </div>
+            `;
+
+            document.getElementById('resultDetails').innerHTML = summaryHtml + resultsHtml;
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        function restartQuiz() {
+            currentQuestion = 0;
+            answers = new Array(questions.length).fill(null);
+            timeLeft = 300;
+            document.getElementById('studentName').value = '';
+            document.getElementById('studentClass').value = '';
+            showPage('registration');
+        }
+    </script>
+</body>
+</html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8"></meta>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"></meta>
+    <title>แบบทดสอบวันเด็กแห่งชาติ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&amp;display=swap" rel="stylesheet"></link>
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .page {
+            display: none;
+        }
+
+        .active {
+            display: block;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2196F3;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        .question {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .option:hover {
+            background-color: #f5f5f5;
+        }
+
+        .selected {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .timer {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #FF5722;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .correct {
+            background-color: #dff0d8;
+        }
+
+        .incorrect {
+            background-color: #f2dede;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- หน้าลงทะเบียน -->
+        <div class="page active" id="registration">
+            <h1>แบบทดสอบวันเด็กแห่งชาติ</h1>
+            <div class="form-group">
+                <label for="studentName">ชื่อ-นามสกุล:</label>
+                <input id="studentName" required="" type="text" />
+            </div>
+            <div class="form-group">
+                <label for="studentClass">ชั้นเรียน:</label>
+                <input id="studentClass" required="" type="text" />
+            </div>
+            <button class="btn" onclick="startQuiz()">เริ่มทำแบบทดสอบ</button>
+        </div>
+
+        <!-- หน้าแบบทดสอบ -->
+        <div class="page" id="quiz">
+            <div class="timer">เวลา: <span id="time">05:00</span></div>
+            <div id="question"></div>
+            <div class="navigation">
+                <button class="btn" onclick="previousQuestion()">ย้อนกลับ</button>
+                <button class="btn" onclick="nextQuestion()">ถัดไป</button>
+            </div>
+        </div>
+
+        <!-- หน้าผลลัพธ์ -->
+        <div class="page" id="results">
+            <h1>ผลการทดสอบ</h1>
+            <div id="resultDetails"></div>
+            <button class="btn" onclick="restartQuiz()">ทำแบบทดสอบอีกครั้ง</button>
+        </div>
+    </div>
+
+    <script>
+        // คำถามและคำตอบ
+        const questions = [
+            {
+                question: "วันเด็กแห่งชาติตรงกับวันใด?",
+                options: [
+                    "วันเสาร์ที่สองของเดือนมกราคม",
+                    "วันอาทิตย์ที่สองของเดือนมกราคม",
+                    "วันเสาร์แรกของเดือนมกราคม",
+                    "วันอาทิตย์แรกของเดือนมกราคม"
+                ],
+                answer: 0,
+                explanation: "วันเด็กแห่งชาติตรงกับวันเสาร์ที่สองของเดือนมกราคม"
+            },
+            {
+                question: "วันเด็กแห่งชาติเริ่มจัดครั้งแรกในประเทศไทยเมื่อใด?",
+                options: [
+                    "พ.ศ. 2500",
+                    "พ.ศ. 2502",
+                    "พ.ศ. 2505",
+                    "พ.ศ. 2508"
+                ],
+                answer: 1,
+                explanation: "ประเทศไทยเริ่มจัดงานวันเด็กแห่งชาติครั้งแรกในปี พ.ศ. 2502"
+            },
+            {
+                question: "คำขวัญวันเด็กแห่งชาติถูกกำหนดโดยใคร?",
+                options: [
+                    "นายกรัฐมนตรี",
+                    "รัฐมนตรีว่าการกระทรวงศึกษาธิการ",
+                    "พระบาทสมเด็จพระเจ้าอยู่หัว",
+                    "คณะรัฐมนตรี"
+                ],
+                answer: 0,
+                explanation: "คำขวัญวันเด็กแห่งชาติจะถูกกำหนดโดยนายกรัฐมนตรีของแต่ละปี"
+            },
+            {
+                question: "หน่วยงานใดเป็นผู้รับผิดชอบหลักในการจัดงานวันเด็กแห่งชาติ?",
+                options: [
+                    "กระทรวงศึกษาธิการ",
+                    "กระทรวงการพัฒนาสังคมและความมั่นคงของมนุษย์",
+                    "กระทรวงวัฒนธรรม",
+                    "สำนักนายกรัฐมนตรี"
+                ],
+                answer: 1,
+                explanation: "กระทรวงการพัฒนาสังคมและความมั่นคงของมนุษย์เป็นหน่วยงานหลักในการจัดงานวันเด็กแห่งชาติ"
+            },
+            {
+                question: "สิทธิขั้นพื้นฐานของเด็กมีกี่ประการ?",
+                options: [
+                    "2 ประการ",
+                    "3 ประการ",
+                    "4 ประการ",
+                    "5 ประการ"
+                ],
+                answer: 2,
+                explanation: "สิทธิขั้นพื้นฐานของเด็กมี 4 ประการ ได้แก่ สิทธิที่จะมีชีวิตรอด สิทธิที่จะได้รับการปกป้อง สิทธิที่จะได้รับการพัฒนา และสิทธิที่จะมีส่วนร่วม"
+            },
+            {
+                question: "วันเด็กสากลตรงกับวันที่เท่าไร?",
+                options: [
+                    "1 มิถุนายน",
+                    "20 พฤศจิกายน",
+                    "5 ธันวาคม",
+                    "31 ธันวาคม"
+                ],
+                answer: 0,
+                explanation: "วันเด็กสากล (Universal Children's Day) ตรงกับวันที่ 1 มิถุนายนของทุกปี"
+            },
+            {
+                question: "อนุสัญญาว่าด้วยสิทธิเด็กกำหนดอายุเท่าไรถือว่าเป็น 'เด็ก'?",
+                options: [
+                    "ต่ำกว่า 15 ปี",
+                    "ต่ำกว่า 18 ปี",
+                    "ต่ำกว่า 20 ปี",
+                    "ต่ำกว่า 25 ปี"
+                ],
+                answer: 1,
+                explanation: "ตามอนุสัญญาว่าด้วยสิทธิเด็ก บุคคลที่มีอายุต่ำกว่า 18 ปีถือว่าเป็นเด็ก"
+            },
+            {
+                question: "กิจกรรมใดที่มักจัดเป็นประจำในวันเด็กแห่งชาติ?",
+                options: [
+                    "การแข่งขันกีฬา",
+                    "การเปิดให้เข้าชมทำเนียบรัฐบาล",
+                    "การประกวดร้องเพลง",
+                    "การแข่งขันตอบปัญหา"
+                ],
+                answer: 1,
+                explanation: "การเปิดทำเนียบรัฐบาลให้เด็กๆ เข้าชมเป็นกิจกรรมที่จัดเป็นประจำทุกปีในวันเด็กแห่งชาติ"
+            },
+            {
+                question: "สถานที่ใดที่นิยมจัดกิจกรรมวันเด็กแห่งชาติมากที่สุด?",
+                options: [
+                    "โรงเรียน",
+                    "สวนสาธารณะ",
+                    "ศูนย์การค้า",
+                    "หน่วยงานราชการ"
+                ],
+                answer: 0,
+                explanation: "โรงเรียนเป็นสถานที่หลักในการจัดกิจกรรมวันเด็กแห่งชาติ เพราะเป็นศูนย์รวมของเด็กและเยาวชน"
+            },
+            {
+                question: "ข้อใดเป็นวัตถุประสงค์หลักของการจัดงานวันเด็กแห่งชาติ?",
+                options: [
+                    "เพื่อให้ความบันเทิงแก่เด็ก",
+                    "เพื่อส่งเสริมความสำคัญของเด็กในสังคม",
+                    "เพื่อให้ผู้ปกครองพาเด็กไปเที่ยว",
+                    "เพื่อกระตุ้นเศรษฐกิจ"
+                ],
+                answer: 1,
+                explanation: "วัตถุประสงค์หลักของการจัดงานวันเด็กแห่งชาติคือการส่งเสริมให้ทุกคนเห็นความสำคัญของเด็กซึ่งจะเป็นกำลังสำคัญของชาติในอนาคต"
+            }
+            // เพิ่มคำถามที่เหลือตามที่เคยให้ไว้
+        ];
+
+        let currentQuestion = 0;
+        let answers = new Array(questions.length).fill(null);
+        let timer;
+        let timeLeft = 300; // 5 นาที
+
+        function startQuiz() {
+            const name = document.getElementById('studentName').value;
+            const className = document.getElementById('studentClass').value;
+
+            if (!name || !className) {
+                alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+                return;
+            }
+
+            showPage('quiz');
+            showQuestion();
+            startTimer();
+        }
+
+        function showQuestion() {
+            const question = questions[currentQuestion];
+            document.getElementById('question').innerHTML = `
+                <div class="question">
+                    <h3>ข้อที่ ${currentQuestion + 1}</h3>
+                    <p>${question.question}</p>
+                    <div class="options">
+                        ${question.options.map((option, index) => `
+                            <div class="option ${answers[currentQuestion] === index ? 'selected' : ''}"
+                                 onclick="selectOption(${index})">
+                                ${option}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectOption(index) {
+            answers[currentQuestion] = index;
+            document.querySelectorAll('.option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            document.querySelectorAll('.option')[index].classList.add('selected');
+        }
+
+        function previousQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                showQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                showQuestion();
+            } else {
+                finishQuiz();
+            }
+        }
+
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                document.getElementById('time').textContent = 
+                    `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    finishQuiz();
+                }
+            }, 1000);
+        }
+
+        function finishQuiz() {
+            clearInterval(timer);
+            showPage('results');
+            showResults();
+        }
+
+        function showResults() {
+            let resultsHtml = '';
+            let notAnswered = 0;
+            let correctAnswers = 0;
+            let incorrectAnswers = 0;
+            let score = 0;
+
+            questions.forEach((question, index) => {
+                if (answers[index] === null) {
+                    notAnswered++;
+                } else if (answers[index] === question.answer) {
+                    correctAnswers++;
+                    score++;
+                } else {
+                    incorrectAnswers++;
+                }
+                
+                const isCorrect = answers[index] === question.answer;
+
+                resultsHtml += `
+                    <div class="question ${isCorrect ? 'correct' : 'incorrect'}">
+                        <p>ข้อ ${index + 1}: ${question.question}</p>
+                        <p>คำตอบของคุณ: ${answers[index] !== null ? 
+                            question.options[answers[index]] : '<span style="color: red;">ไม่ได้ตอบ</span>'}</p>
+                        <p>คำตอบที่ถูกต้อง: ${question.options[question.answer]}</p>
+                        <p>คำอธิบาย: ${question.explanation}</p>
+                    </div>
+                `;
+            });
+
+            const percentage = (score / questions.length) * 100;
+            let gradeText = '';
+            let gradeColor = '';
+
+            if (percentage >= 80) {
+                gradeText = 'ดีมาก';
+                gradeColor = '#4CAF50';
+            } else if (percentage >= 70) {
+                gradeText = 'ดี';
+                gradeColor = '#2196F3';
+            } else if (percentage >= 60) {
+                gradeText = 'พอใช้';
+                gradeColor = '#FF9800';
+            } else {
+                gradeText = 'ควรปรับปรุง';
+                gradeColor = '#f44336';
+            }
+
+            const summaryHtml = `
+                <div class="summary" style="margin: 20px 0; padding: 20px; background-color: #f8f9fa; border-radius: 8px;">
+                    <h2 style="color: #2196F3; margin-bottom: 15px;">สรุปผลการทดสอบ</h2>
+                    <div class="summary-content" style="font-size: 16px; line-height: 1.6;">
+                        <p><strong>คะแนนรวม:</strong> ${score} คะแนน จาก ${questions.length} คะแนนเต็ม (${percentage.toFixed(2)}%)</p>
+                        <p><strong>ตอบถูก:</strong> ${correctAnswers} ข้อ</p>
+                        <p><strong>ตอบผิด:</strong> ${incorrectAnswers} ข้อ</p>
+                        <p><strong>ไม่ได้ตอบ:</strong> ${notAnswered} ข้อ</p>
+                        <p><strong>การประเมินผล:</strong> 
+                            <span style="color: ${gradeColor};">${gradeText}</span>
+                        </p>
+                        <p><strong>เวลาที่ใช้:</strong> ${Math.floor((300 - timeLeft) / 60)} นาที ${(300 - timeLeft) % 60} วินาที</p>
+                    </div>
+                </div>
+                <div class="recommendations" style="margin: 20px 0; padding: 20px; background-color: #e3f2fd; border-radius: 8px;">
+                    <h3 style="color: #1976D2; margin-bottom: 10px;">คำแนะนำ</h3>
+                    <ul style="list-style-type: none; padding-left: 0;">
+                        ${percentage < 60 ? '<li>⚠️ ควรทบทวนเนื้อหาเกี่ยวกับวันเด็กแห่งชาติเพิ่มเติม</li>' : ''}
+                        ${notAnswered > 0 ? '<li>⚠️ ควรพยายามตอบคำถามให้ครบทุกข้อ</li>' : ''}
+                        ${timeLeft === 0 ? '<li>⚠️ ควรฝึกการทำข้อสอบให้เร็วขึ้น</li>' : ''}
+                        ${percentage >= 80 ? '<li>🌟 ทำได้ดีมาก ควรรักษามาตรฐานนี้ไว้</li>' : ''}
+                    </ul>
+                </div>
+            `;
+
+            document.getElementById('resultDetails').innerHTML = summaryHtml + resultsHtml;
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        function restartQuiz() {
+            currentQuestion = 0;
+            answers = new Array(questions.length).fill(null);
+            timeLeft = 300;
+            document.getElementById('studentName').value = '';
+            document.getElementById('studentClass').value = '';
+            showPage('registration');
+        }
+    </script>
+</body>
+</html>
